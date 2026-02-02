@@ -35,16 +35,17 @@ const uploadFile = async (req, res, next) => {
 
     const result = await uploadToCloudinary(req.file.buffer, resourceType);
 
-    const file = await FileUpload.create({
-      store: storeId,
-      uploaderName,
-      note,
-      fileUrl: result.secure_url,
-      fileType: req.file.mimetype,
-      originalFileName: req.file.originalname,
-      status: "pending",
-      cloudinaryPublicId: result.public_id
-    });
+   const file = await FileUpload.create({
+  shop: storeId,
+  userName: uploaderName,
+  note,
+  fileUrl: result.secure_url,
+  fileType: req.file.mimetype,
+  originalFileName: req.file.originalname,
+  status: "pending",
+  cloudinaryPublicId: result.public_id
+});
+
 
     res.status(201).json(file);
   } catch (err) {
@@ -56,8 +57,9 @@ const getStoreUploads = async (req, res, next) => {
   try {
     const storeId = req.params.storeId;
 
-    const files = await FileUpload.find({ store: storeId })
-      .sort({ createdAt: -1 });
+    const files = await FileUpload.find({ shop: storeId })
+  .sort({ createdAt: -1 });
+
 
     res.json(files);
   } catch (err) {
@@ -72,9 +74,11 @@ const deleteFile = async (req, res, next) => {
       return res.status(404).json({ message: "File not found" });
     }
 
-    await cloudinary.uploader.destroy(file.cloudinaryPublicId, {
-      resource_type: file.fileType === "application/pdf" ? "raw" : "auto"
-    });
+    if (file.cloudinaryPublicId) {
+      await cloudinary.uploader.destroy(file.cloudinaryPublicId, {
+        resource_type: file.fileType === "application/pdf" ? "raw" : "auto"
+      });
+    }
 
     await file.deleteOne();
 
@@ -83,6 +87,7 @@ const deleteFile = async (req, res, next) => {
     next(err);
   }
 };
+
 
 module.exports = {
   uploadFile,
