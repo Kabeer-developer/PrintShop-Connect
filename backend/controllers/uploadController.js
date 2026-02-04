@@ -14,10 +14,10 @@ const uploadToCloudinary = (buffer, resourceType) =>
 
 const uploadFile = async (req, res, next) => {
   try {
-    const { uploaderName, note } = req.body;
+    const { userName, note } = req.body;
     const storeId = req.params.storeId;
 
-    if (!uploaderName) {
+    if (!userName) {
       return res.status(400).json({ message: "Name required" });
     }
 
@@ -35,17 +35,16 @@ const uploadFile = async (req, res, next) => {
 
     const result = await uploadToCloudinary(req.file.buffer, resourceType);
 
-   const file = await FileUpload.create({
-  shop: storeId,
-  userName: uploaderName,
-  note,
-  fileUrl: result.secure_url,
-  fileType: req.file.mimetype,
-  originalFileName: req.file.originalname,
-  status: "pending",
-  cloudinaryPublicId: result.public_id
-});
-
+    const file = await FileUpload.create({
+      shop: storeId,
+      userName,
+      note,
+      fileUrl: result.secure_url,
+      fileType: req.file.mimetype,
+      originalFileName: req.file.originalname,
+      status: "pending",
+      cloudinaryPublicId: result.public_id
+    });
 
     res.status(201).json(file);
   } catch (err) {
@@ -56,11 +55,7 @@ const uploadFile = async (req, res, next) => {
 const getStoreUploads = async (req, res, next) => {
   try {
     const storeId = req.params.storeId;
-
-    const files = await FileUpload.find({ shop: storeId })
-  .sort({ createdAt: -1 });
-
-
+    const files = await FileUpload.find({ shop: storeId }).sort({ createdAt: -1 });
     res.json(files);
   } catch (err) {
     next(err);
@@ -81,13 +76,11 @@ const deleteFile = async (req, res, next) => {
     }
 
     await file.deleteOne();
-
     res.json({ message: "Deleted" });
   } catch (err) {
     next(err);
   }
 };
-
 
 module.exports = {
   uploadFile,
