@@ -13,7 +13,7 @@ import { loadUserFromStorage } from "./redux/slices/storeSlice";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { storeInfo } = useSelector((state) => state.store);
+  const { storeInfo } = useSelector((state) => state.storeAuth);
 
   useEffect(() => {
     dispatch(loadUserFromStorage());

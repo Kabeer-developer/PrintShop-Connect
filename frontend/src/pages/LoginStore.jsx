@@ -27,6 +27,7 @@ const LoginStore = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await dispatch(loginStore(form));
+    console.log(result);
     if (result.meta.requestStatus === "fulfilled") {
       navigate("/dashboard");
     }

@@ -1,20 +1,18 @@
-import axios from "./axiosInstance";
+import axios from "axios";
 
-const uploadFile = async (storeId, formData) => {
-  const res = await axios.post(`/api/upload/${storeId}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return res.data;
-};
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
+});
 
-const getStoreFiles = async (storeId) => {
-  const res = await axios.get(`/api/upload/files/${storeId}`);
-  return res.data;
-};
+axiosInstance.interceptors.request.use((config) => {
+  const raw = localStorage.getItem("storeInfo");
+  if (raw) {
+    const { token } = JSON.parse(raw);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
 
-const deleteFile = async (fileId) => {
-  const res = await axios.delete(`/api/upload/files/${fileId}`);
-  return res.data;
-};
-
-export default { uploadFile, getStoreFiles, deleteFile };
+export default axiosInstance;
