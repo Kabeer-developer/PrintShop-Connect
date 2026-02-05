@@ -13,7 +13,8 @@ import { loadUserFromStorage } from "./redux/slices/storeSlice";
 
 const App = () => {
   const dispatch = useDispatch();
-  const { storeInfo } = useSelector((state) => state.storeAuth);
+
+  const { storeInfo } = useSelector((state) => state.store);
 
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -32,7 +33,9 @@ const App = () => {
 
           <Route
             path="/dashboard"
-            element={storeInfo ? <Dashboard /> : <Navigate to="/login" replace />}
+            element={
+              storeInfo ? <Dashboard /> : <Navigate to="/login" replace />
+            }
           />
 
           <Route path="*" element={<Navigate to="/" replace />} />

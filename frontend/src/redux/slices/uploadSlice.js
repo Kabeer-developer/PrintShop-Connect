@@ -63,7 +63,7 @@ const uploadSlice = createSlice({
       })
       .addCase(fetchStoreFiles.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Fetch failed";
+        state.error = action.payload || "Fetch failed";
       })
       .addCase(uploadFile.fulfilled, (state, action) => {
         state.files.unshift(action.payload);

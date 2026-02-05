@@ -8,7 +8,7 @@ const LoginStore = () => {
   const navigate = useNavigate();
 
   const { storeInfo, loading, error } = useSelector(
-    (state) => state.storeAuth
+    (state) => state.store
   );
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -16,7 +16,7 @@ const LoginStore = () => {
 
   useEffect(() => {
     if (storeInfo) {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
   }, [storeInfo, navigate]);
 
@@ -26,11 +26,7 @@ const LoginStore = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await dispatch(loginStore(form));
-    console.log(result);
-    if (result.meta.requestStatus === "fulfilled") {
-      navigate("/dashboard");
-    }
+    await dispatch(loginStore(form));
   };
 
   return (
@@ -75,7 +71,7 @@ const LoginStore = () => {
 
           {error && (
             <div className="bg-red-50 text-red-700 border border-red-200 p-3 rounded">
-              {typeof error === "string" ? error : error.message}
+              {typeof error === "string" ? error : "Login failed"}
             </div>
           )}
 

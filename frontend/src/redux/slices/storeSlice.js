@@ -41,11 +41,11 @@ const storeSlice = createSlice({
     },
     loadUserFromStorage(state) {
       const raw = localStorage.getItem("storeInfo");
-      if (raw) {
-        const { store, token } = JSON.parse(raw);
-        state.storeInfo = store;
-        state.token = token;
-      }
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      state.storeInfo = parsed.store;
+      state.token = parsed.token;
     },
   },
   extraReducers: (builder) => {
@@ -58,14 +58,11 @@ const storeSlice = createSlice({
         state.loading = false;
         state.storeInfo = action.payload.store;
         state.token = action.payload.token;
-        localStorage.setItem(
-          "storeInfo",
-          JSON.stringify(action.payload)
-        );
+        localStorage.setItem("storeInfo", JSON.stringify(action.payload));
       })
       .addCase(registerStore.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Register failed";
+        state.error = action.payload || "Register failed";
       })
       .addCase(loginStore.pending, (state) => {
         state.loading = true;
@@ -75,14 +72,11 @@ const storeSlice = createSlice({
         state.loading = false;
         state.storeInfo = action.payload.store;
         state.token = action.payload.token;
-        localStorage.setItem(
-          "storeInfo",
-          JSON.stringify(action.payload)
-        );
+        localStorage.setItem("storeInfo", JSON.stringify(action.payload));
       })
       .addCase(loginStore.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.message || "Login failed";
+        state.error = action.payload || "Login failed";
       });
   },
 });

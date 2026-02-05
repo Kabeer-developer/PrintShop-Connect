@@ -11,7 +11,7 @@ const StoreDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [userName, setUserName] = useState("");
+  const [uploaderName, setUploaderName] = useState("");
   const [note, setNote] = useState("");
   const [file, setFile] = useState(null);
 
@@ -33,17 +33,18 @@ const StoreDetail = () => {
   }, [id]);
 
   const validateFile = (file) => {
-    if (file.size > 10 * 1024 * 1024)
+    if (file.size > 10 * 1024 * 1024) {
       return "File must be less than 10MB";
+    }
+
     if (
-      ![
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/jpg",
-      ].includes(file.type)
-    )
+      !["application/pdf", "image/jpeg", "image/png", "image/jpg"].includes(
+        file.type
+      )
+    ) {
       return "Only PDF or image files allowed";
+    }
+
     return null;
   };
 
@@ -51,9 +52,9 @@ const StoreDetail = () => {
     const selected = e.target.files[0];
     if (!selected) return;
 
-    const error = validateFile(selected);
-    if (error) {
-      setStatus({ type: "error", msg: error });
+    const err = validateFile(selected);
+    if (err) {
+      setStatus({ type: "error", msg: err });
       setFile(null);
       e.target.value = null;
       return;
@@ -65,13 +66,14 @@ const StoreDetail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file || !userName.trim()) {
+
+    if (!file || !uploaderName.trim()) {
       setStatus({ type: "error", msg: "Name and file are required" });
       return;
     }
 
     const fd = new FormData();
-    fd.append("userName", userName.trim());
+    fd.append("uploaderName", uploaderName.trim()); // ✅ FIXED
     fd.append("note", note.trim());
     fd.append("file", file);
 
@@ -82,7 +84,7 @@ const StoreDetail = () => {
       await uploadService.uploadFile(id, fd);
 
       setStatus({ type: "success", msg: "File uploaded successfully" });
-      setUserName("");
+      setUploaderName("");
       setNote("");
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = null;
@@ -98,12 +100,14 @@ const StoreDetail = () => {
 
   if (loading) return <p className="text-center p-6">Loading...</p>;
   if (error) return <p className="text-center text-red-600 p-6">{error}</p>;
+  if (!store) return null;
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
       <div className="flex gap-4 items-center">
         <img
           src={store.logoUrl || "https://via.placeholder.com/100"}
+          alt={store.name}
           className="w-24 h-24 rounded object-cover"
         />
         <div>
@@ -120,8 +124,8 @@ const StoreDetail = () => {
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
+          value={uploaderName}
+          onChange={(e) => setUploaderName(e.target.value)}
           placeholder="Your name"
           className="w-full border px-3 py-2 rounded"
           disabled={isUploading}
@@ -146,9 +150,9 @@ const StoreDetail = () => {
 
         <button
           type="submit"
-          disabled={isUploading || !file || !userName}
+          disabled={isUploading || !file || !uploaderName}
           className={`px-4 py-2 rounded text-white ${
-            isUploading || !file || !userName
+            isUploading || !file || !uploaderName
               ? "bg-gray-400"
               : "bg-blue-600 hover:bg-blue-700"
           }`}

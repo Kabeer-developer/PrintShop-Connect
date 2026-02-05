@@ -8,13 +8,14 @@ const RegisterStore = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const { storeInfo, loading, error } = useSelector(
-    (state) => state.storeAuth
-  );
+ const { storeInfo, loading, error } = useSelector(
+  (state) => state.store
+);
+
 
   useEffect(() => {
     if (storeInfo) {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
   }, [storeInfo, navigate]);
 
@@ -28,26 +29,27 @@ const RegisterStore = () => {
   });
 
   const [logoPreview, setLogoPreview] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "logo") {
-      const file = files[0];
+      const file = files?.[0];
       if (!file) return;
 
       if (file.size > 5 * 1024 * 1024) {
-        return setValidationErrors({ logo: "Max size is 5MB" });
+        setErrors({ logo: "Logo must be under 5MB" });
+        return;
       }
+
       if (!file.type.startsWith("image/")) {
-        return setValidationErrors({ logo: "Only image files allowed" });
+        setErrors({ logo: "Only image files allowed" });
+        return;
       }
 
       setForm((p) => ({ ...p, logo: file }));
-      setValidationErrors({});
+      setErrors({});
 
       const reader = new FileReader();
       reader.onloadend = () => setLogoPreview(reader.result);
@@ -56,26 +58,27 @@ const RegisterStore = () => {
     }
 
     setForm((p) => ({ ...p, [name]: value }));
-    setValidationErrors((p) => ({ ...p, [name]: null }));
+    setErrors((p) => ({ ...p, [name]: null }));
   };
 
-  const validateForm = () => {
-    const errors = {};
+  const validate = () => {
+    const e = {};
 
-    if (!form.name.trim()) errors.name = "Store name required";
-    if (!form.location.trim()) errors.location = "Location required";
+    if (!form.name.trim()) e.name = "Store name required";
+    if (!form.location.trim()) e.location = "Location required";
+    if (!form.email.trim()) e.email = "Email required";
     if (form.password.length < 6)
-      errors.password = "Password must be at least 6 characters";
+      e.password = "Password must be at least 6 characters";
     if (form.password !== form.confirmPassword)
-      errors.confirmPassword = "Passwords do not match";
+      e.confirmPassword = "Passwords do not match";
 
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validate()) return;
 
     const fd = new FormData();
     fd.append("name", form.name.trim());
@@ -84,34 +87,35 @@ const RegisterStore = () => {
     fd.append("password", form.password);
     if (form.logo) fd.append("logo", form.logo);
 
-    const result = await dispatch(registerStore(fd));
-    if (result.meta.requestStatus === "fulfilled") {
-      navigate("/dashboard");
+    const res = await dispatch(registerStore(fd));
+    if (res.meta.requestStatus === "fulfilled") {
+      navigate("/dashboard", { replace: true });
     }
   };
 
   const removeLogo = () => {
     setForm((p) => ({ ...p, logo: null }));
     setLogoPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = null;
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-2xl bg-white p-8 rounded-xl shadow">
-        <h1 className="text-3xl font-bold mb-2 text-center">
+        <h1 className="text-3xl font-bold text-center mb-2">
           Register Your Store
         </h1>
         <p className="text-center text-gray-600 mb-6">
           Create a store account to receive print jobs
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Logo */}
           <div className="flex flex-col items-center">
             {logoPreview ? (
               <img
                 src={logoPreview}
+                alt="logo"
                 className="w-24 h-24 rounded-full object-cover mb-2"
               />
             ) : (
@@ -127,10 +131,8 @@ const RegisterStore = () => {
               disabled={loading}
             />
 
-            {validationErrors.logo && (
-              <p className="text-red-600 text-sm">
-                {validationErrors.logo}
-              </p>
+            {errors.logo && (
+              <p className="text-red-600 text-sm mt-1">{errors.logo}</p>
             )}
 
             {logoPreview && (
@@ -149,25 +151,21 @@ const RegisterStore = () => {
             placeholder="Store Name"
             value={form.name}
             onChange={handleChange}
-            className="w-full border px-4 py-3 rounded"
             disabled={loading}
+            className="w-full border px-4 py-3 rounded"
           />
-          {validationErrors.name && (
-            <p className="text-red-600 text-sm">{validationErrors.name}</p>
-          )}
+          {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
 
           <input
             name="location"
             placeholder="Location"
             value={form.location}
             onChange={handleChange}
-            className="w-full border px-4 py-3 rounded"
             disabled={loading}
+            className="w-full border px-4 py-3 rounded"
           />
-          {validationErrors.location && (
-            <p className="text-red-600 text-sm">
-              {validationErrors.location}
-            </p>
+          {errors.location && (
+            <p className="text-red-600 text-sm">{errors.location}</p>
           )}
 
           <input
@@ -176,38 +174,38 @@ const RegisterStore = () => {
             placeholder="Email"
             value={form.email}
             onChange={handleChange}
-            className="w-full border px-4 py-3 rounded"
             disabled={loading}
+            className="w-full border px-4 py-3 rounded"
           />
+          {errors.email && (
+            <p className="text-red-600 text-sm">{errors.email}</p>
+          )}
 
           <input
             name="password"
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder="Password"
             value={form.password}
             onChange={handleChange}
-            className="w-full border px-4 py-3 rounded"
             disabled={loading}
+            className="w-full border px-4 py-3 rounded"
           />
+          {errors.password && (
+            <p className="text-red-600 text-sm">{errors.password}</p>
+          )}
 
           <input
             name="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
+            type="password"
             placeholder="Confirm Password"
             value={form.confirmPassword}
             onChange={handleChange}
-            className="w-full border px-4 py-3 rounded"
             disabled={loading}
+            className="w-full border px-4 py-3 rounded"
           />
-
-          {validationErrors.password && (
+          {errors.confirmPassword && (
             <p className="text-red-600 text-sm">
-              {validationErrors.password}
-            </p>
-          )}
-          {validationErrors.confirmPassword && (
-            <p className="text-red-600 text-sm">
-              {validationErrors.confirmPassword}
+              {errors.confirmPassword}
             </p>
           )}
 

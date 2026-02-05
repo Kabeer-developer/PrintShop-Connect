@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/slices/storeSlice";
 
 const Navbar = () => {
-  const { storeInfo } = useSelector((state) => state.storeAuth);
+  const { storeInfo } = useSelector((state) => state.store);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,7 +38,6 @@ const Navbar = () => {
     <nav className="bg-white border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold">S2P</span>
@@ -46,7 +45,6 @@ const Navbar = () => {
             <span className="font-bold text-lg">Scan2Print</span>
           </Link>
 
-          {/* Desktop */}
           <div className="hidden md:flex items-center gap-2">
             <NavLink to="/">Home</NavLink>
 
@@ -88,7 +86,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2"
@@ -97,7 +94,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t">
             <div className="flex flex-col gap-2">

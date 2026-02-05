@@ -1,22 +1,21 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchStoreFiles, deleteFile } from "../redux/slices/uploadSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const { storeInfo } = useSelector((state) => state.storeAuth);
+
   const { files, loading } = useSelector((state) => state.uploads);
 
-  useEffect(() => {
-    if (!storeInfo) {
-      navigate("/login");
-      return;
-    }
-    dispatch(fetchStoreFiles(storeInfo._id));
-  }, [dispatch, storeInfo, navigate]);
+ useEffect(() => {
+  if (!storeInfo?._id) return;
+
+  dispatch(fetchStoreFiles(storeInfo._id));
+}, [dispatch, storeInfo?._id]);
+
 
   const handleDelete = (fileId) => {
     if (!window.confirm("Delete this file?")) return;
@@ -45,6 +44,7 @@ const Dashboard = () => {
           <img
             src={storeInfo.logoUrl || "https://via.placeholder.com/80"}
             className="w-20 h-20 rounded object-cover"
+            alt="Store"
           />
           <div>
             <h2 className="text-xl font-semibold">{storeInfo.name}</h2>
@@ -70,9 +70,7 @@ const Dashboard = () => {
                 className="flex justify-between items-center border p-4 rounded"
               >
                 <div>
-                  <p className="font-medium">
-                    {file.userName || "Anonymous"}
-                  </p>
+                  <p className="font-medium">{file.userName || "Anonymous"}</p>
                   <p className="text-sm text-gray-500">
                     {file.originalFileName}
                   </p>
