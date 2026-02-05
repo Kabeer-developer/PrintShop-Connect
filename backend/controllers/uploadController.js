@@ -3,21 +3,31 @@ const Store = require("../models/Store");
 const cloudinary = require("../utils/cloudinary");
 const streamifier = require("streamifier");
 
-const uploadToCloudinary = (buffer, resourceType) =>
-  new Promise((resolve, reject) => {
+
+const uploadToCloudinary = (buffer, resourceType) => {
+  return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "customer_uploads", resource_type: resourceType },
-      (err, result) => (result ? resolve(result) : reject(err))
+      {
+        folder: "customer_uploads",
+        resource_type: resourceType
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
     );
+
     streamifier.createReadStream(buffer).pipe(stream);
   });
+};
+
 
 const uploadFile = async (req, res, next) => {
   try {
     const { userName, note } = req.body;
-    const storeId = req.params.storeId;
+    const { storeId } = req.params;
 
-    if (!userName) {
+    if (!userName || !userName.trim()) {
       return res.status(400).json({ message: "Name required" });
     }
 
@@ -33,12 +43,15 @@ const uploadFile = async (req, res, next) => {
     const resourceType =
       req.file.mimetype === "application/pdf" ? "raw" : "auto";
 
-    const result = await uploadToCloudinary(req.file.buffer, resourceType);
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      resourceType
+    );
 
     const file = await FileUpload.create({
       shop: storeId,
-      userName,
-      note,
+      userName: userName.trim(),
+      note: note?.trim() || "",
       fileUrl: result.secure_url,
       fileType: req.file.mimetype,
       originalFileName: req.file.originalname,
@@ -52,30 +65,42 @@ const uploadFile = async (req, res, next) => {
   }
 };
 
+
 const getStoreUploads = async (req, res, next) => {
   try {
-    const storeId = req.params.storeId;
-    const files = await FileUpload.find({ shop: storeId }).sort({ createdAt: -1 });
+    const { storeId } = req.params;
+
+    const files = await FileUpload.find({ shop: storeId })
+      .sort({ createdAt: -1 });
+
     res.json(files);
   } catch (err) {
     next(err);
   }
 };
 
+
 const deleteFile = async (req, res, next) => {
   try {
-    const file = await FileUpload.findById(req.params.fileId);
+    const { fileId } = req.params;
+
+    const file = await FileUpload.findById(fileId);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
     if (file.cloudinaryPublicId) {
-      await cloudinary.uploader.destroy(file.cloudinaryPublicId, {
-        resource_type: file.fileType === "application/pdf" ? "raw" : "auto"
-      });
+      await cloudinary.uploader.destroy(
+        file.cloudinaryPublicId,
+        {
+          resource_type:
+            file.fileType === "application/pdf" ? "raw" : "auto"
+        }
+      );
     }
 
     await file.deleteOne();
+
     res.json({ message: "Deleted" });
   } catch (err) {
     next(err);
