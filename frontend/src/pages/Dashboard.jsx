@@ -1,102 +1,46 @@
-import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
 import { fetchStoreFiles, deleteFile } from "../redux/slices/uploadSlice";
-import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const { storeInfo } = useSelector((s) => s.store);
+  const { files, loading } = useSelector((s) => s.uploads);
 
-  const { storeInfo } = useSelector((state) => state.storeAuth);
+  useEffect(() => {
+    if (storeInfo?._id) {
+      dispatch(fetchStoreFiles(storeInfo._id));
+    }
+  }, [dispatch, storeInfo?._id]);
 
-  const { files, loading } = useSelector((state) => state.uploads);
-
- useEffect(() => {
-  if (!storeInfo?._id) return;
-
-  dispatch(fetchStoreFiles(storeInfo._id));
-}, [dispatch, storeInfo?._id]);
-
-
-  const handleDelete = (fileId) => {
-    if (!window.confirm("Delete this file?")) return;
-    dispatch(deleteFile(fileId));
-  };
-
-  if (!storeInfo) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Link
-          to="/login"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg"
-        >
-          Login to continue
-        </Link>
-      </div>
-    );
-  }
+  if (!storeInfo) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">Uploads</h2>
 
-        <div className="bg-white p-6 rounded-lg mb-6 flex items-center gap-4">
-          <img
-            src={storeInfo.logoUrl || "https://via.placeholder.com/80"}
-            className="w-20 h-20 rounded object-cover"
-            alt="Store"
-          />
+      {loading && <p>Loading...</p>}
+
+      {files.length === 0 && !loading && <p>No files</p>}
+
+      {files.map((f) => (
+        <div
+          key={f._id}
+          className="border p-3 flex justify-between mb-2"
+        >
           <div>
-            <h2 className="text-xl font-semibold">{storeInfo.name}</h2>
-            <p className="text-gray-600">{storeInfo.location}</p>
+            <p className="font-semibold">{f.userName}</p>
+            <p className="text-sm">{f.originalFileName}</p>
           </div>
+
+          <button
+            onClick={() => dispatch(deleteFile(f._id))}
+            className="text-red-600"
+          >
+            Delete
+          </button>
         </div>
-
-        <div className="bg-white p-6 rounded-lg">
-          <h3 className="text-xl font-semibold mb-4">
-            Uploaded Files ({files.length})
-          </h3>
-
-          {loading && <p>Loading...</p>}
-
-          {!loading && files.length === 0 && (
-            <p className="text-gray-500">No files uploaded yet</p>
-          )}
-
-          <div className="space-y-3">
-            {files.map((file) => (
-              <div
-                key={file._id}
-                className="flex justify-between items-center border p-4 rounded"
-              >
-                <div>
-                  <p className="font-medium">{file.userName || "Anonymous"}</p>
-                  <p className="text-sm text-gray-500">
-                    {file.originalFileName}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <a
-                    href={file.fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 text-blue-600"
-                  >
-                    View
-                  </a>
-                  <button
-                    onClick={() => handleDelete(file._id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
   );
 };

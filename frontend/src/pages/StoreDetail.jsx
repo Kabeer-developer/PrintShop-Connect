@@ -1,178 +1,75 @@
-import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 import storeService from "../api/storeService";
 import uploadService from "../api/uploadService";
 
 const StoreDetail = () => {
   const { id } = useParams();
-  const fileInputRef = useRef(null);
+  const fileRef = useRef();
 
   const [store, setStore] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [uploaderName, setUploaderName] = useState("");
+  const [userName, setUserName] = useState("");
   const [note, setNote] = useState("");
   const [file, setFile] = useState(null);
-
-  const [status, setStatus] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    const loadStore = async () => {
-      try {
-        const data = await storeService.getStoreById(id);
-        setStore(data);
-      } catch {
-        setError("Store not found");
-      } finally {
-        setLoading(false);
-      }
+    const load = async () => {
+      const data = await storeService.getStoreById(id);
+      setStore(data);
     };
-    loadStore();
+    load();
   }, [id]);
 
-  const validateFile = (file) => {
-    if (file.size > 10 * 1024 * 1024) {
-      return "File must be less than 10MB";
-    }
-
-    if (
-      !["application/pdf", "image/jpeg", "image/png", "image/jpg"].includes(
-        file.type
-      )
-    ) {
-      return "Only PDF or image files allowed";
-    }
-
-    return null;
-  };
-
-  const handleFileChange = (e) => {
-    const selected = e.target.files[0];
-    if (!selected) return;
-
-    const err = validateFile(selected);
-    if (err) {
-      setStatus({ type: "error", msg: err });
-      setFile(null);
-      e.target.value = null;
-      return;
-    }
-
-    setFile(selected);
-    setStatus(null);
-  };
-
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-
-    if (!file || !uploaderName.trim()) {
-      setStatus({ type: "error", msg: "Name and file are required" });
+    if (!userName || !file) {
+      setMsg("Name and file required");
       return;
     }
 
     const fd = new FormData();
-    fd.append("uploaderName", uploaderName.trim()); // ✅ FIXED
-    fd.append("note", note.trim());
+    fd.append("userName", userName);
+    fd.append("note", note);
     fd.append("file", file);
 
-    try {
-      setIsUploading(true);
-      setStatus({ type: "loading", msg: "Uploading..." });
-
-      await uploadService.uploadFile(id, fd);
-
-      setStatus({ type: "success", msg: "File uploaded successfully" });
-      setUploaderName("");
-      setNote("");
-      setFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = null;
-    } catch (err) {
-      setStatus({
-        type: "error",
-        msg: err.response?.data?.message || "Upload failed",
-      });
-    } finally {
-      setIsUploading(false);
-    }
+    await uploadService.uploadFile(id, fd);
+    setMsg("Uploaded");
+    setUserName("");
+    setNote("");
+    setFile(null);
+    fileRef.current.value = "";
   };
 
-  if (loading) return <p className="text-center p-6">Loading...</p>;
-  if (error) return <p className="text-center text-red-600 p-6">{error}</p>;
-  if (!store) return null;
+  if (!store) return <p className="p-6">Loading...</p>;
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-      <div className="flex gap-4 items-center">
-        <img
-          src={store.logoUrl || "https://via.placeholder.com/100"}
-          alt={store.name}
-          className="w-24 h-24 rounded object-cover"
-        />
-        <div>
-          <h2 className="text-xl font-bold">{store.name}</h2>
-          <p className="text-gray-600">{store.location}</p>
-        </div>
-      </div>
+    <div className="max-w-xl mx-auto p-6">
+      <h2 className="text-xl font-bold mb-2">{store.name}</h2>
+      <p className="mb-4 text-gray-600">{store.location}</p>
 
-      <hr className="my-4" />
-
-      <h3 className="text-lg font-semibold mb-3">
-        Upload document for printing
-      </h3>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={submit} className="space-y-3">
         <input
-          value={uploaderName}
-          onChange={(e) => setUploaderName(e.target.value)}
           placeholder="Your name"
-          className="w-full border px-3 py-2 rounded"
-          disabled={isUploading}
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          className="border p-2 w-full"
         />
-
         <textarea
+          placeholder="Note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Note (optional)"
-          className="w-full border px-3 py-2 rounded"
-          rows={2}
-          disabled={isUploading}
+          className="border p-2 w-full"
         />
-
         <input
-          ref={fileInputRef}
           type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={handleFileChange}
-          disabled={isUploading}
+          ref={fileRef}
+          onChange={(e) => setFile(e.target.files[0])}
         />
-
-        <button
-          type="submit"
-          disabled={isUploading || !file || !uploaderName}
-          className={`px-4 py-2 rounded text-white ${
-            isUploading || !file || !uploaderName
-              ? "bg-gray-400"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {isUploading ? "Uploading..." : "Upload"}
+        <button className="bg-blue-600 text-white px-4 py-2">
+          Upload
         </button>
-
-        {status && (
-          <div
-            className={`p-3 rounded text-sm ${
-              status.type === "error"
-                ? "bg-red-50 text-red-700"
-                : status.type === "success"
-                ? "bg-green-50 text-green-700"
-                : "bg-blue-50 text-blue-700"
-            }`}
-          >
-            {status.msg}
-          </div>
-        )}
+        {msg && <p>{msg}</p>}
       </form>
     </div>
   );

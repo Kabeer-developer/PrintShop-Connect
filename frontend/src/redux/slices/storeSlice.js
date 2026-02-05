@@ -14,18 +14,18 @@ export const registerStore = createAsyncThunk(
     try {
       return await storeService.registerStore(formData);
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(err.response?.data?.message);
     }
   }
 );
 
 export const loginStore = createAsyncThunk(
   "store/login",
-  async (credentials, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-      return await storeService.loginStore(credentials);
+      return await storeService.loginStore(data);
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(err.response?.data?.message);
     }
   }
 );
@@ -41,11 +41,11 @@ const storeSlice = createSlice({
     },
     loadUserFromStorage(state) {
       const raw = localStorage.getItem("storeInfo");
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw);
-      state.storeInfo = parsed.store;
-      state.token = parsed.token;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state.storeInfo = parsed.store;
+        state.token = parsed.token;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -62,7 +62,7 @@ const storeSlice = createSlice({
       })
       .addCase(registerStore.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Register failed";
+        state.error = action.payload;
       })
       .addCase(loginStore.pending, (state) => {
         state.loading = true;
@@ -76,7 +76,7 @@ const storeSlice = createSlice({
       })
       .addCase(loginStore.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Login failed";
+        state.error = action.payload;
       });
   },
 });
