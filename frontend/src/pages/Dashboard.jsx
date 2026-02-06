@@ -4,16 +4,22 @@ import { fetchStoreFiles, deleteFile } from "../redux/slices/uploadSlice";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { storeInfo } = useSelector((s) => s.store);
-  const { files, loading } = useSelector((s) => s.uploads);
+
+  const storeInfo = useSelector((state) => state.store.storeInfo);
+  const { files, loading } = useSelector((state) => state.uploads);
 
   useEffect(() => {
-    if (storeInfo?._id) {
-      dispatch(fetchStoreFiles(storeInfo._id));
-    }
-  }, [dispatch, storeInfo?._id]);
+    if (!storeInfo?.id) return;
 
-  if (!storeInfo) return null;
+    dispatch(fetchStoreFiles(storeInfo.id));
+  }, [dispatch, storeInfo?.id]);
+
+  console.log("STORE FROM REDUX:", storeInfo);
+  console.log("FILES FROM REDUX:", files);
+
+  if (!storeInfo) {
+    return <p className="p-6">Please login</p>;
+  }
 
   return (
     <div className="p-6">
@@ -21,16 +27,20 @@ const Dashboard = () => {
 
       {loading && <p>Loading...</p>}
 
-      {files.length === 0 && !loading && <p>No files</p>}
+      {!loading && files.length === 0 && (
+        <p>No files uploaded yet</p>
+      )}
 
       {files.map((f) => (
         <div
           key={f._id}
-          className="border p-3 flex justify-between mb-2"
+          className="border p-3 flex justify-between items-center mb-2"
         >
           <div>
             <p className="font-semibold">{f.userName}</p>
-            <p className="text-sm">{f.originalFileName}</p>
+            <p className="text-sm text-gray-600">
+              {f.originalFileName}
+            </p>
           </div>
 
           <button

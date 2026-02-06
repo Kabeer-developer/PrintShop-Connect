@@ -1,13 +1,13 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: "http://localhost:5000/api", 
 });
 
 axiosInstance.interceptors.request.use((config) => {
-  const raw = localStorage.getItem("storeInfo");
-  if (raw) {
-    const { token } = JSON.parse(raw);
+  const data = localStorage.getItem("storeInfo");
+  if (data) {
+    const { token } = JSON.parse(data);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
