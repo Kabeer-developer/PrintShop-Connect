@@ -107,8 +107,38 @@ const deleteFile = async (req, res, next) => {
   }
 };
 
+
+
+const downloadFile = async (req, res, next) => {
+  try {
+    const file = await FileUpload.findById(req.params.fileId);
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const response = await axios.get(file.fileUrl, {
+      responseType: "stream"
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${file.originalFileName}"`
+    );
+    res.setHeader(
+      "Content-Type",
+      file.fileType || "application/octet-stream"
+    );
+
+    response.data.pipe(res);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 module.exports = {
   uploadFile,
   getStoreUploads,
-  deleteFile
+  deleteFile,
+  downloadFile
 };
