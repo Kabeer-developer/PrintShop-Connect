@@ -1,15 +1,15 @@
+const axios = require("axios");
 const FileUpload = require("../models/FileUpload");
 const Store = require("../models/Store");
 const cloudinary = require("../utils/cloudinary");
 const streamifier = require("streamifier");
-
 
 const uploadToCloudinary = (buffer, resourceType) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: "customer_uploads",
-        resource_type: resourceType
+        resource_type: resourceType,
       },
       (error, result) => {
         if (error) return reject(error);
@@ -21,13 +21,12 @@ const uploadToCloudinary = (buffer, resourceType) => {
   });
 };
 
-
 const uploadFile = async (req, res, next) => {
   try {
     const { userName, note } = req.body;
     const { storeId } = req.params;
 
-    if (!userName || !userName.trim()) {
+    if (!userName?.trim()) {
       return res.status(400).json({ message: "Name required" });
     }
 
@@ -56,7 +55,7 @@ const uploadFile = async (req, res, next) => {
       fileType: req.file.mimetype,
       originalFileName: req.file.originalname,
       status: "pending",
-      cloudinaryPublicId: result.public_id
+      cloudinaryPublicId: result.public_id,
     });
 
     res.status(201).json(file);
@@ -64,7 +63,6 @@ const uploadFile = async (req, res, next) => {
     next(err);
   }
 };
-
 
 const getStoreUploads = async (req, res, next) => {
   try {
@@ -79,7 +77,6 @@ const getStoreUploads = async (req, res, next) => {
   }
 };
 
-
 const deleteFile = async (req, res, next) => {
   try {
     const { fileId } = req.params;
@@ -90,34 +87,30 @@ const deleteFile = async (req, res, next) => {
     }
 
     if (file.cloudinaryPublicId) {
-      await cloudinary.uploader.destroy(
-        file.cloudinaryPublicId,
-        {
-          resource_type:
-            file.fileType === "application/pdf" ? "raw" : "auto"
-        }
-      );
+      await cloudinary.uploader.destroy(file.cloudinaryPublicId, {
+        resource_type:
+          file.fileType === "application/pdf" ? "raw" : "auto",
+      });
     }
 
     await file.deleteOne();
-
     res.json({ message: "Deleted" });
   } catch (err) {
     next(err);
   }
 };
 
-
-
 const downloadFile = async (req, res, next) => {
   try {
-    const file = await FileUpload.findById(req.params.fileId);
+    const { fileId } = req.params;
+
+    const file = await FileUpload.findById(fileId);
     if (!file) {
       return res.status(404).json({ message: "File not found" });
     }
 
     const response = await axios.get(file.fileUrl, {
-      responseType: "stream"
+      responseType: "stream",
     });
 
     res.setHeader(
@@ -126,7 +119,8 @@ const downloadFile = async (req, res, next) => {
     );
     res.setHeader(
       "Content-Type",
-      file.fileType || "application/octet-stream"
+      response.headers["content-type"] ||
+        "application/octet-stream"
     );
 
     response.data.pipe(res);
@@ -135,10 +129,9 @@ const downloadFile = async (req, res, next) => {
   }
 };
 
-
 module.exports = {
   uploadFile,
   getStoreUploads,
   deleteFile,
-  downloadFile
+  downloadFile,
 };
