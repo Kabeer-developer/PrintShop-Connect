@@ -27,9 +27,39 @@ const Dashboard = () => {
   };
 
   const handleDownload = async (fileId, fileName) => {
-  const token = JSON.parse(
-    localStorage.getItem("storeInfo")
-  )?.token;
+    const token = JSON.parse(
+      localStorage.getItem("storeInfo")
+    )?.token;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/upload/download/${fileId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      alert("Download failed");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = async (fileId, fileName, fileType) => {
+  const token = JSON.parse(localStorage.getItem("storeInfo"))?.token;
 
   const res = await fetch(
     `${import.meta.env.VITE_API_BASE_URL}/api/upload/download/${fileId}`,
@@ -41,21 +71,46 @@ const Dashboard = () => {
   );
 
   if (!res.ok) {
-    alert("Download failed");
+    alert("Print failed");
     return;
   }
 
   const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  
+  if (fileType.startsWith("image/")) {
+    const imgWindow = window.open(url, "_blank");
+    if (!imgWindow) return alert("Allow popups");
 
-  window.URL.revokeObjectURL(url);
+    imgWindow.onload = () => {
+      imgWindow.print();
+      window.URL.revokeObjectURL(url);
+    };
+    return;
+  }
+
+ 
+  if (fileType === "application/pdf") {
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = url;
+
+    document.body.appendChild(iframe);
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        document.body.removeChild(iframe);
+        window.URL.revokeObjectURL(url);
+      }, 500); 
+    };
+    return;
+  }
+
+  alert("Unsupported file type for printing");
 };
 
 
@@ -86,7 +141,6 @@ const Dashboard = () => {
             </div>
 
             <div className="flex gap-4">
-             
               <button
                 onClick={() =>
                   handleDownload(
@@ -99,7 +153,20 @@ const Dashboard = () => {
                 Download
               </button>
 
-            
+             <button
+  onClick={() =>
+    handlePrint(
+      f._id,
+      f.originalFileName,
+      f.fileType
+    )
+  }
+  className="text-green-600 hover:underline"
+>
+  Print
+</button>
+
+
               <button
                 onClick={() => handleDelete(f._id)}
                 className="text-red-600 hover:underline"
