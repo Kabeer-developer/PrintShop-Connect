@@ -6,7 +6,7 @@ const {
   uploadFile,
   getStoreUploads,
   deleteFile,
-  downloadFile
+  downloadFile,
 } = require("../controllers/uploadController");
 
 const { protectShop } = require("../middleware/authMiddleware");
@@ -17,6 +17,8 @@ router.post("/:storeId", upload.single("file"), uploadFile);
 router.get("/files/:storeId", protectShop, getStoreUploads);
 router.delete("/files/:fileId", protectShop, deleteFile);
 router.get("/download/:fileId",protectShop,downloadFile);
+
+
 
 
 module.exports = router;

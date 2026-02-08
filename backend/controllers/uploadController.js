@@ -62,6 +62,7 @@ const uploadFile = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+
 };
 
 const getStoreUploads = async (req, res, next) => {
